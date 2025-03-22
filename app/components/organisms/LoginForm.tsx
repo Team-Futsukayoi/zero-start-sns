@@ -22,7 +22,6 @@ interface LoginFormProps {
   onPasswordChange: (text: string) => void;
   onSubmit: () => void;
   onToggleMode: () => void;
-  onAnonymousLogin: () => void;
 }
 
 export const LoginForm: React.FC<LoginFormProps> = ({
@@ -35,7 +34,6 @@ export const LoginForm: React.FC<LoginFormProps> = ({
   onPasswordChange,
   onSubmit,
   onToggleMode,
-  onAnonymousLogin,
 }) => {
   return (
     <View style={styles.form}>
@@ -71,17 +69,6 @@ export const LoginForm: React.FC<LoginFormProps> = ({
         {mode === 'signIn'
           ? LOGIN_MESSAGES.SWITCH_TO_SIGN_UP
           : LOGIN_MESSAGES.SWITCH_TO_SIGN_IN}
-      </Button>
-
-      <Divider text={LOGIN_MESSAGES.OR} />
-
-      <Button
-        variant="secondary"
-        onPress={onAnonymousLogin}
-        icon="person-outline"
-        disabled={loading}
-      >
-        {LOGIN_MESSAGES.ANONYMOUS_SIGN_IN}
       </Button>
     </View>
   );
