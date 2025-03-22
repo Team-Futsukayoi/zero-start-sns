@@ -1,6 +1,5 @@
 import React from 'react';
-import { View, Text, StyleSheet } from 'react-native';
-import Slider from '@react-native-community/slider';
+import { View, Text, StyleSheet, Pressable } from 'react-native';
 import { PersonalityTrait } from '../../../types/evaluation';
 
 type PersonalityRatingProps = {
@@ -9,7 +8,7 @@ type PersonalityRatingProps = {
   onValueChange: (value: number) => void;
 };
 
-export const PersonalityRating: React.FC<PersonalityRatingProps> = ({
+const PersonalityRating: React.FC<PersonalityRatingProps> = ({
   trait,
   value,
   onValueChange,
@@ -17,19 +16,31 @@ export const PersonalityRating: React.FC<PersonalityRatingProps> = ({
   return (
     <View style={styles.container}>
       <Text style={styles.traitName}>{trait.name}</Text>
-      <View style={styles.sliderContainer}>
-        <Text style={styles.label}>{trait.negative}</Text>
-        <Slider
-          style={styles.slider}
-          minimumValue={-1}
-          maximumValue={1}
-          step={0.1}
-          value={value}
-          onValueChange={onValueChange}
-          minimumTrackTintColor="#007AFF"
-          maximumTrackTintColor="#DEDEDE"
-        />
-        <Text style={styles.label}>{trait.positive}</Text>
+      <View style={styles.buttonContainer}>
+        <Pressable
+          style={[
+            styles.button,
+            value === -1 && styles.selectedButton,
+            styles.negativeButton,
+          ]}
+          onPress={() => onValueChange(-1)}
+        >
+          <Text style={[styles.buttonText, value === -1 && styles.selectedButtonText]}>
+            {trait.negative}
+          </Text>
+        </Pressable>
+        <Pressable
+          style={[
+            styles.button,
+            value === 1 && styles.selectedButton,
+            styles.positiveButton,
+          ]}
+          onPress={() => onValueChange(1)}
+        >
+          <Text style={[styles.buttonText, value === 1 && styles.selectedButtonText]}>
+            {trait.positive}
+          </Text>
+        </Pressable>
       </View>
     </View>
   );
@@ -53,22 +64,40 @@ const styles = StyleSheet.create({
   traitName: {
     fontSize: 16,
     fontWeight: '600',
-    marginBottom: 8,
+    marginBottom: 12,
     color: '#333333',
   },
-  sliderContainer: {
+  buttonContainer: {
     flexDirection: 'row',
-    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: 12,
   },
-  slider: {
+  button: {
     flex: 1,
-    height: 40,
-    marginHorizontal: 8,
+    padding: 12,
+    borderRadius: 8,
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: '#E0E0E0',
   },
-  label: {
+  negativeButton: {
+    backgroundColor: '#F5F5F5',
+  },
+  positiveButton: {
+    backgroundColor: '#F5F5F5',
+  },
+  selectedButton: {
+    backgroundColor: '#007AFF',
+    borderColor: '#007AFF',
+  },
+  buttonText: {
     fontSize: 14,
     color: '#666666',
-    width: 80,
-    textAlign: 'center',
   },
-}); 
+  selectedButtonText: {
+    color: '#FFFFFF',
+    fontWeight: '600',
+  },
+});
+
+export default PersonalityRating; 

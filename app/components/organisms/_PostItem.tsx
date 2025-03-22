@@ -4,6 +4,9 @@ import { Database } from '../../../types/supabase';
 import { Heart, MessageCircle, Share2 } from 'lucide-react-native';
 import { formatDistanceToNow } from 'date-fns';
 import { ja } from 'date-fns/locale';
+import PersonalityRating from '../molecules/PersonalityRating';
+import { PERSONALITY_TRAITS } from '../../../types/evaluation';
+import { usePersonality } from '../../../hooks/usePersonality';
 
 /**
  * 投稿アイテムのプロパティ
@@ -46,6 +49,8 @@ export const PostItem: React.FC<PostItemProps> = ({
   const [isLiked, setIsLiked] = useState<boolean>(false);
   /** ローカルのいいね数 */
   const [localLikesCount, setLocalLikesCount] = useState<number>(likesCount);
+  const [showEvaluation, setShowEvaluation] = useState<boolean>(false);
+  const { ratings, updateRating, submitRating, isSubmitting } = usePersonality(post.id);
 
   /**
    * 投稿が作成されてからの経過時間を表示用にフォーマットする
@@ -82,6 +87,14 @@ export const PostItem: React.FC<PostItemProps> = ({
   const handlePress = (): void => {
     if (onPress) {
       onPress(post);
+    }
+  };
+
+  const handleTraitChange = async (trait: string, value: number) => {
+    try {
+      await submitRating(trait, value);
+    } catch (error) {
+      console.error('評価の保存に失敗しました:', error);
     }
   };
 
@@ -132,7 +145,27 @@ export const PostItem: React.FC<PostItemProps> = ({
         >
           <Share2 size={18} color="#666" />
         </Pressable>
+
+        <Pressable
+          style={styles.actionButton}
+          onPress={() => setShowEvaluation(!showEvaluation)}
+        >
+          <Text style={styles.actionText}>評価</Text>
+        </Pressable>
       </View>
+
+      {showEvaluation && (
+        <View style={styles.evaluationContainer}>
+          {PERSONALITY_TRAITS.map((trait) => (
+            <PersonalityRating
+              key={trait.name}
+              trait={trait}
+              value={ratings[trait.name] || 0}
+              onValueChange={(value) => handleTraitChange(trait.name, value)}
+            />
+          ))}
+        </View>
+      )}
     </Pressable>
   );
 };
@@ -189,6 +222,12 @@ const styles = StyleSheet.create({
     marginLeft: 6,
     color: '#666',
     fontSize: 14,
+  },
+  evaluationContainer: {
+    marginTop: 12,
+    borderTopWidth: 1,
+    borderTopColor: '#f0f0f0',
+    paddingTop: 12,
   },
 });
 

@@ -14,7 +14,7 @@
       - `post_id` (uuid, references posts)
       - `user_id` (uuid, references auth.users)
       - `trait` (text)
-      - `value` (integer)
+      - `value` (float)
     
     - `profiles`: Stores user profiles with personality traits
       - `id` (uuid, primary key)
@@ -60,22 +60,25 @@ CREATE TABLE IF NOT EXISTS evaluations (
   post_id uuid REFERENCES posts(id) ON DELETE CASCADE,
   user_id uuid REFERENCES auth.users(id) ON DELETE CASCADE,
   trait text NOT NULL,
-  value integer NOT NULL CHECK (value >= -1 AND value <= 1),
+  value float NOT NULL CHECK (value >= -1 AND value <= 1),
   UNIQUE(post_id, user_id, trait)
 );
 
 ALTER TABLE evaluations ENABLE ROW LEVEL SECURITY;
 
+-- 全ての認証済みユーザーが評価を読み取れる
 CREATE POLICY "Users can read all evaluations"
   ON evaluations
   FOR SELECT
   TO authenticated
   USING (true);
 
-CREATE POLICY "Users can create evaluations"
+-- 認証済みユーザーは評価を作成・更新できる
+CREATE POLICY "Users can manage evaluations"
   ON evaluations
-  FOR INSERT
+  FOR ALL
   TO authenticated
+  USING (auth.uid() = user_id)
   WITH CHECK (auth.uid() = user_id);
 
 -- Create profiles table
@@ -118,3 +121,21 @@ $$ LANGUAGE plpgsql SECURITY DEFINER;
 CREATE TRIGGER on_auth_user_created
   AFTER INSERT ON auth.users
   FOR EACH ROW EXECUTE FUNCTION public.handle_new_user();
+
+-- Create function to update user personality
+CREATE OR REPLACE FUNCTION update_user_personality(
+  p_user_id uuid,
+  p_trait text,
+  p_value float
+) RETURNS void AS $$
+BEGIN
+  UPDATE profiles
+  SET
+    extroversion = CASE WHEN p_trait = 'extroversion' THEN p_value ELSE extroversion END,
+    openness = CASE WHEN p_trait = 'openness' THEN p_value ELSE openness END,
+    conscientiousness = CASE WHEN p_trait = 'conscientiousness' THEN p_value ELSE conscientiousness END,
+    optimism = CASE WHEN p_trait = 'optimism' THEN p_value ELSE optimism END,
+    independence = CASE WHEN p_trait = 'independence' THEN p_value ELSE independence END
+  WHERE user_id = p_user_id;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
