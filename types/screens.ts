@@ -16,8 +16,6 @@ export const LOGIN_MESSAGES = {
   LOADING: 'お待ちください...',
   SWITCH_TO_SIGN_IN: 'すでにアカウントをお持ちの方はこちら',
   SWITCH_TO_SIGN_UP: 'アカウントをお持ちでない方はこちら',
-  OR: 'または',
-  ANONYMOUS_SIGN_IN: '匿名でログイン',
   EMAIL_PLACEHOLDER: 'メールアドレス',
   PASSWORD_PLACEHOLDER: 'パスワード',
 } as const;
