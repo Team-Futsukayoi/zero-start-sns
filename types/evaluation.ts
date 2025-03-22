@@ -20,28 +20,28 @@ export type EvaluationFormData = {
 
 export const PERSONALITY_TRAITS: PersonalityTrait[] = [
   {
-    name: '外向性',
+    name: 'extroversion',
     positive: '社交的',
     negative: '内向的'
   },
   {
-    name: '協調性',
-    positive: '協力的',
-    negative: '自己中心的'
+    name: 'openness',
+    positive: '創造的',
+    negative: '保守的'
   },
   {
-    name: '勤勉性',
+    name: 'conscientiousness',
     positive: '几帳面',
     negative: '大雑把'
   },
   {
-    name: '神経症傾向',
-    positive: '敏感',
-    negative: '鈍感'
+    name: 'optimism',
+    positive: '楽観的',
+    negative: '悲観的'
   },
   {
-    name: '開放性',
-    positive: '創造的',
-    negative: '保守的'
+    name: 'independence',
+    positive: '独立心が強い',
+    negative: '依存心が強い'
   }
 ]; 
