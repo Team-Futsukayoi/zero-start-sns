@@ -1,5 +1,5 @@
 import { StyleSheet } from 'react-native';
-import { LOGIN_STYLE_CONSTANTS } from '../../../types/screens';
+import { LOGIN_STYLE_CONSTANTS } from '../../types/screens';
 
 const { MAX_FORM_WIDTH, BORDER_RADIUS, SPACING, FONT_SIZE } =
   LOGIN_STYLE_CONSTANTS;
@@ -102,3 +102,5 @@ export const styles = StyleSheet.create({
     fontSize: FONT_SIZE.DIVIDER,
   },
 });
+
+export default styles;

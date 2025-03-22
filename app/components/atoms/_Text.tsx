@@ -20,6 +20,8 @@ export const Text: React.FC<TextProps> = ({
   return <RNText style={[styles[variant], style]}>{children}</RNText>;
 };
 
+export default Text;
+
 const styles = StyleSheet.create({
   title: {
     fontSize: FONT_SIZE.TITLE,

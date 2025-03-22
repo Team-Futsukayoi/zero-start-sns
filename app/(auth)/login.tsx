@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
 import { useAuth } from '../../hooks/useAuth';
 import { LoginMode, LOGIN_MESSAGES } from '../../types/screens';
-import { AuthTemplate } from '../components/templates/AuthTemplate';
-import { LoginForm } from '../components/organisms/LoginForm';
+import { AuthTemplate } from '../components/templates/_AuthTemplate';
+import { LoginForm } from '../components/organisms/_LoginForm';
 
 export default function LoginScreen() {
   const [email, setEmail] = useState('');

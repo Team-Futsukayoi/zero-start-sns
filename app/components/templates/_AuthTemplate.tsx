@@ -1,6 +1,6 @@
 import React from 'react';
 import { View, StyleSheet } from 'react-native';
-import { Text } from '../atoms/Text';
+import { Text } from '../atoms/_Text';
 import { LOGIN_STYLE_CONSTANTS } from '../../../types/screens';
 
 const { SPACING } = LOGIN_STYLE_CONSTANTS;
@@ -33,6 +33,8 @@ export const AuthTemplate: React.FC<AuthTemplateProps> = ({
     </View>
   );
 };
+
+export default AuthTemplate;
 
 const styles = StyleSheet.create({
   container: {
