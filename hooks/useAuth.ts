@@ -113,34 +113,8 @@ export const useAuth = (): AuthHookReturn => {
   };
 
   /**
-   * 匿名サインイン処理
-   */
-  const signInAnonymously = async (): Promise<void> => {
-    try {
-      setLoading(true);
-      setError(null);
-
-      const { error: signInError } = await supabase.auth.signInAnonymously();
-
-      if (signInError) {
-        setError(handleAuthError(signInError));
-        return;
-      }
-
-      router.replace('/(tabs)');
-    } catch (error) {
-      console.error('Anonymous SignIn Error:', error);
-      setError({
-        field: 'general',
-        message: 'ログインに失敗しました',
-      });
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  /**
    * サインアウト処理
+   * @returns サインアウト処理の結果
    */
   const signOut = async (): Promise<void> => {
     try {
@@ -171,7 +145,6 @@ export const useAuth = (): AuthHookReturn => {
     error,
     signUp,
     signIn,
-    signInAnonymously,
     signOut,
   };
 };
