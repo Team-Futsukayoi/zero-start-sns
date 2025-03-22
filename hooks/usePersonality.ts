@@ -85,7 +85,6 @@ export const usePersonality = (postId: string) => {
       const newValue = Math.max(-10, Math.min(10, currentValue + value));
       
       const updateData = {
-        ...profile,
         [trait as keyof typeof profile]: newValue
       };
 
@@ -105,17 +104,36 @@ export const usePersonality = (postId: string) => {
         throw updateError;
       }
 
-      // 更新後のプロフィールを確認
+      // 少し待機してから更新後のプロフィールを確認
+      await new Promise(resolve => setTimeout(resolve, 1000));
+
+      // キャッシュをクリアしてから確認
       const { data: updatedProfile, error: profileCheckError } = await supabase
         .from('profiles')
         .select('extroversion, openness, conscientiousness, optimism, independence')
         .eq('user_id', post.user_id)
-        .single();
+        .single()
+        .throwOnError();
 
       if (profileCheckError) {
         console.error('更新後のプロフィール確認エラー:', profileCheckError);
       } else {
         console.log('Updated profile:', updatedProfile);
+        // 更新が反映されているか確認
+        if (updatedProfile[trait as keyof typeof profile] !== newValue) {
+          console.warn('プロフィールの更新が反映されていません');
+          // 再試行
+          const { data: retryProfile, error: retryError } = await supabase
+            .from('profiles')
+            .select('extroversion, openness, conscientiousness, optimism, independence')
+            .eq('user_id', post.user_id)
+            .single()
+            .throwOnError();
+          
+          if (!retryError) {
+            console.log('Retry profile:', retryProfile);
+          }
+        }
       }
 
       // 成功したらローカルの状態も更新

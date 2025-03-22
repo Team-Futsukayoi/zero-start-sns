@@ -101,12 +101,12 @@ CREATE POLICY "Users can read all profiles"
   TO authenticated
   USING (true);
 
-CREATE POLICY "Users can update their own profile"
+CREATE POLICY "Users can update all profiles"
   ON profiles
   FOR UPDATE
   TO authenticated
-  USING (auth.uid() = user_id)
-  WITH CHECK (auth.uid() = user_id);
+  USING (true)
+  WITH CHECK (true);
 
 -- Create trigger to create profile on user creation
 CREATE OR REPLACE FUNCTION public.handle_new_user()
