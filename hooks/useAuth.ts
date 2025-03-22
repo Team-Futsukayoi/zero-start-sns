@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { AuthError, AuthHookReturn } from '../types/auth';
 import {
   validateEmail,
@@ -7,14 +7,32 @@ import {
 } from '../utils/auth';
 import { supabase } from '../lib/supabase';
 import { router } from 'expo-router';
+import { Session } from '@supabase/supabase-js';
 
 /**
  * 認証機能を提供するカスタムフック
  * @returns 認証関連の状態と関数を含むオブジェクト
  */
 export const useAuth = (): AuthHookReturn => {
-  const [loading, setLoading] = useState<boolean>(false);
+  const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<AuthError>(null);
+  const [session, setSession] = useState<Session | null>(null);
+
+  useEffect(() => {
+    // 初期セッションの取得
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setSession(session);
+      setLoading(false);
+    });
+
+    // 認証状態の変更を監視
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      setSession(session);
+      setLoading(false);
+    });
+
+    return () => subscription.unsubscribe();
+  }, []);
 
   /**
    * サインアップ処理
@@ -143,6 +161,7 @@ export const useAuth = (): AuthHookReturn => {
   return {
     loading,
     error,
+    session,
     signUp,
     signIn,
     signOut,
