@@ -14,17 +14,17 @@
       - `post_id` (uuid, references posts)
       - `user_id` (uuid, references auth.users)
       - `trait` (text)
-      - `value` (float)
+      - `value` (integer, -1 to 1)
     
     - `profiles`: Stores user profiles with personality traits
       - `id` (uuid, primary key)
       - `created_at` (timestamp)
       - `user_id` (uuid, references auth.users)
-      - `extroversion` (float)
-      - `openness` (float)
-      - `conscientiousness` (float)
-      - `optimism` (float)
-      - `independence` (float)
+      - `extroversion` (integer, -10 to 10)
+      - `openness` (integer, -10 to 10)
+      - `conscientiousness` (integer, -10 to 10)
+      - `optimism` (integer, -10 to 10)
+      - `independence` (integer, -10 to 10)
 
   2. Security
     - Enable RLS on all tables
@@ -60,7 +60,7 @@ CREATE TABLE IF NOT EXISTS evaluations (
   post_id uuid REFERENCES posts(id) ON DELETE CASCADE,
   user_id uuid REFERENCES auth.users(id) ON DELETE CASCADE,
   trait text NOT NULL,
-  value float NOT NULL CHECK (value >= -1 AND value <= 1),
+  value integer NOT NULL CHECK (value >= -1 AND value <= 1),
   UNIQUE(post_id, user_id, trait)
 );
 

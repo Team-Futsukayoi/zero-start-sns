@@ -31,7 +31,7 @@ export const usePersonality = (postId: string) => {
       if (!post) throw new Error('投稿が見つかりません');
 
       // 既存の評価を確認
-      const { data: existingEvaluation, error: checkError } = await supabase
+      const { data: existingEvaluation, error: existingCheckError } = await supabase
         .from('evaluations')
         .select('id')
         .eq('post_id', postId)
@@ -39,8 +39,8 @@ export const usePersonality = (postId: string) => {
         .eq('trait', trait)
         .single();
 
-      if (checkError && checkError.code !== 'PGRST116') { // PGRST116は「結果が見つからない」エラー
-        throw checkError;
+      if (existingCheckError && existingCheckError.code !== 'PGRST116') { // PGRST116は「結果が見つからない」エラー
+        throw existingCheckError;
       }
 
       let evaluationError;
@@ -66,48 +66,56 @@ export const usePersonality = (postId: string) => {
 
       if (evaluationError) throw evaluationError;
 
-      // 投稿者の全評価を取得して合計値を計算
-      const { data: evaluations, error: evaluationsError } = await supabase
-        .from('evaluations')
-        .select('value')
+      // 投稿者の現在のプロフィールを取得
+      const { data: profile, error: profileError } = await supabase
+        .from('profiles')
+        .select('extroversion, openness, conscientiousness, optimism, independence')
         .eq('user_id', post.user_id)
-        .eq('trait', trait);
+        .single();
 
-      if (evaluationsError) throw evaluationsError;
+      if (profileError) throw profileError;
+      if (!profile) throw new Error('プロフィールが見つかりません');
 
-      // 合計値を計算
-      const totalValue = evaluations.reduce((sum, evaluation) => sum + evaluation.value, 0);
+      console.log('Current profile:', profile);
+      console.log('Trait:', trait);
+      console.log('Value:', value);
 
-      // プロフィールを更新
-      const updateData: Record<string, number> = {};
-      switch (trait) {
-        case 'extroversion':
-          updateData.extroversion = totalValue;
-          break;
-        case 'openness':
-          updateData.openness = totalValue;
-          break;
-        case 'conscientiousness':
-          updateData.conscientiousness = totalValue;
-          break;
-        case 'optimism':
-          updateData.optimism = totalValue;
-          break;
-        case 'independence':
-          updateData.independence = totalValue;
-          break;
-        default:
-          throw new Error(`無効な特性名です: ${trait}`);
-      }
+      // プロフィールを更新（投稿者のプロフィールを更新）
+      const currentValue = profile[trait as keyof typeof profile];
+      const newValue = Math.max(-10, Math.min(10, currentValue + value));
+      
+      const updateData = {
+        ...profile,
+        [trait as keyof typeof profile]: newValue
+      };
 
-      const { error: profileError } = await supabase
+      console.log('Update data:', updateData);
+      console.log('User ID:', post.user_id);
+      console.log('Current value:', currentValue);
+      console.log('New value:', newValue);
+
+      const { error: updateError } = await supabase
         .from('profiles')
         .update(updateData)
         .eq('user_id', post.user_id);
 
-      if (profileError) {
-        console.error('プロフィール更新エラー:', profileError);
-        throw profileError;
+      if (updateError) {
+        console.error('プロフィール更新エラー:', updateError);
+        console.error('更新データ:', updateData);
+        throw updateError;
+      }
+
+      // 更新後のプロフィールを確認
+      const { data: updatedProfile, error: profileCheckError } = await supabase
+        .from('profiles')
+        .select('extroversion, openness, conscientiousness, optimism, independence')
+        .eq('user_id', post.user_id)
+        .single();
+
+      if (profileCheckError) {
+        console.error('更新後のプロフィール確認エラー:', profileCheckError);
+      } else {
+        console.log('Updated profile:', updatedProfile);
       }
 
       // 成功したらローカルの状態も更新
