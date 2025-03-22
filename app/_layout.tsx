@@ -19,9 +19,9 @@ export default function RootLayout() {
     const inAuthGroup = segments[0] && AUTH_GROUPS.includes(segments[0]);
 
     if (!session && inAuthGroup) {
-      router.replace('/login');
+      router.push('/(auth)/login');
     } else if (session && !inAuthGroup) {
-      router.replace('/(tabs)');
+      router.push('/(tabs)/Home');
     }
   }, [session, loading, segments]);
 

@@ -11,7 +11,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Settings } from 'lucide-react-native';
 import React from 'react';
-import { useAuth } from '../../hooks/useAuth';
+import { useAuth } from '../../../hooks/useAuth';
 import { MaterialIcons } from '@expo/vector-icons';
 
 interface PersonalityTraitProps {
@@ -252,9 +252,11 @@ const styles = StyleSheet.create({
   progressFill: {
     height: '100%',
     backgroundColor: '#000',
+    borderRadius: 3,
   },
   footer: {
     padding: 20,
+    paddingBottom: 70,
     borderTopWidth: 1,
     borderTopColor: '#eee',
   },
@@ -262,17 +264,13 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    paddingVertical: 15,
-    paddingHorizontal: 30,
-    borderRadius: 25,
-    backgroundColor: '#fff',
-    borderWidth: 1,
-    borderColor: '#000',
-    gap: 10,
+    padding: 15,
+    backgroundColor: '#f5f5f5',
+    borderRadius: 10,
   },
   logoutButtonText: {
-    color: '#000',
     fontSize: 16,
-    fontWeight: '600',
+    fontWeight: '500',
+    marginLeft: 10,
   },
 });
