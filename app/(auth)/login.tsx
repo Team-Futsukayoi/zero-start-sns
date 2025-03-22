@@ -1,68 +1,52 @@
-import { View, Text, StyleSheet, Pressable } from 'react-native';
-import { router } from 'expo-router';
-import { LogIn } from 'lucide-react-native';
+import React, { useState } from 'react';
+import { useAuth } from '../../hooks/useAuth';
+import { LoginMode, LOGIN_MESSAGES } from '../../types/screens';
+import { AuthTemplate } from '../components/templates/AuthTemplate';
+import { LoginForm } from '../components/organisms/LoginForm';
 
 export default function LoginScreen() {
-  const handleAnonymousLogin = () => {
-    // TODO: Implement anonymous login with Supabase
-    router.replace('/(tabs)');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [mode, setMode] = useState<LoginMode>('signIn');
+  const { signIn, signUp, signInAnonymously, loading, error } = useAuth();
+
+  const handleSubmit = async () => {
+    if (mode === 'signIn') {
+      await signIn(email, password);
+    } else {
+      await signUp(email, password);
+    }
+  };
+
+  const toggleMode = () => {
+    setMode(mode === 'signIn' ? 'signUp' : 'signIn');
   };
 
   return (
-    <View style={styles.container}>
-      <View style={styles.content}>
-        <Text style={styles.title}>無からスタートするSNS</Text>
-        <Text style={styles.subtitle}>
-          あなたの個性は、他者との関わりの中で見つかる
-        </Text>
-        
-        <Pressable 
-          style={styles.loginButton} 
-          onPress={handleAnonymousLogin}
-        >
-          <LogIn size={24} color="#fff" />
-          <Text style={styles.loginButtonText}>匿名でログイン</Text>
-        </Pressable>
-      </View>
-    </View>
+    <AuthTemplate
+      title={
+        mode === 'signIn'
+          ? LOGIN_MESSAGES.SIGN_IN_TITLE
+          : LOGIN_MESSAGES.SIGN_UP_TITLE
+      }
+      subtitle={
+        mode === 'signIn'
+          ? LOGIN_MESSAGES.SIGN_IN_SUBTITLE
+          : LOGIN_MESSAGES.SIGN_UP_SUBTITLE
+      }
+    >
+      <LoginForm
+        email={email}
+        password={password}
+        mode={mode}
+        loading={loading}
+        error={error}
+        onEmailChange={setEmail}
+        onPasswordChange={setPassword}
+        onSubmit={handleSubmit}
+        onToggleMode={toggleMode}
+        onAnonymousLogin={signInAnonymously}
+      />
+    </AuthTemplate>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#fff',
-  },
-  content: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    padding: 20,
-  },
-  title: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    marginBottom: 10,
-    textAlign: 'center',
-  },
-  subtitle: {
-    fontSize: 16,
-    color: '#666',
-    textAlign: 'center',
-    marginBottom: 40,
-  },
-  loginButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#000',
-    paddingVertical: 15,
-    paddingHorizontal: 30,
-    borderRadius: 25,
-    gap: 10,
-  },
-  loginButtonText: {
-    color: '#fff',
-    fontSize: 16,
-    fontWeight: '600',
-  },
-});
