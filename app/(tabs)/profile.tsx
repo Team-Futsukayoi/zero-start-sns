@@ -1,8 +1,28 @@
-import { View, Text, StyleSheet, Image, ScrollView, Pressable } from 'react-native';
+import {
+  View,
+  Text,
+  StyleSheet,
+  Image,
+  ScrollView,
+  Pressable,
+  TouchableOpacity,
+  ActivityIndicator,
+} from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Settings } from 'lucide-react-native';
+import React from 'react';
+import { useAuth } from '../../hooks/useAuth';
+import { MaterialIcons } from '@expo/vector-icons';
+
+interface PersonalityTraitProps {
+  title: string;
+  description: string;
+  value: number;
+}
 
 export default function ProfileScreen() {
+  const { signOut, loading } = useAuth();
+
   // TODO: Implement profile data fetching from Supabase
   const profile = {
     evaluations: {
@@ -16,7 +36,7 @@ export default function ProfileScreen() {
       posts: 24,
       evaluations: 156,
       received: 432,
-    }
+    },
   };
 
   return (
@@ -30,12 +50,16 @@ export default function ProfileScreen() {
 
       <ScrollView style={styles.content}>
         <View style={styles.profileHeader}>
-          <Image 
-            source={{ uri: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=128&h=128&fit=crop' }}
+          <Image
+            source={{
+              uri: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=128&h=128&fit=crop',
+            }}
             style={styles.avatar}
           />
           <Text style={styles.username}>匿名ユーザー</Text>
-          <Text style={styles.bio}>あなたの個性は、他者との関わりの中で見つかる</Text>
+          <Text style={styles.bio}>
+            あなたの個性は、他者との関わりの中で見つかる
+          </Text>
         </View>
 
         <View style={styles.statsContainer}>
@@ -58,39 +82,60 @@ export default function ProfileScreen() {
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>性格分析</Text>
           <View style={styles.personalityContainer}>
-            <PersonalityTrait 
-              title="外向性" 
+            <PersonalityTrait
+              title="外向性"
               description="社交的 / 内向的"
-              value={profile.evaluations.extroversion} 
+              value={profile.evaluations.extroversion}
             />
-            <PersonalityTrait 
-              title="開放性" 
+            <PersonalityTrait
+              title="開放性"
               description="創造的 / 保守的"
-              value={profile.evaluations.openness} 
+              value={profile.evaluations.openness}
             />
-            <PersonalityTrait 
-              title="誠実性" 
+            <PersonalityTrait
+              title="誠実性"
               description="計画的 / 気分屋"
-              value={profile.evaluations.conscientiousness} 
+              value={profile.evaluations.conscientiousness}
             />
-            <PersonalityTrait 
-              title="楽観性" 
+            <PersonalityTrait
+              title="楽観性"
               description="前向き / 慎重"
-              value={profile.evaluations.optimism} 
+              value={profile.evaluations.optimism}
             />
-            <PersonalityTrait 
-              title="独立性" 
+            <PersonalityTrait
+              title="独立性"
               description="主体的 / 協調的"
-              value={profile.evaluations.independence} 
+              value={profile.evaluations.independence}
             />
           </View>
         </View>
       </ScrollView>
+
+      <View style={styles.footer}>
+        <TouchableOpacity
+          style={styles.logoutButton}
+          onPress={signOut}
+          disabled={loading}
+        >
+          {loading ? (
+            <ActivityIndicator color="#000" />
+          ) : (
+            <>
+              <MaterialIcons name="logout" size={24} color="#000" />
+              <Text style={styles.logoutButtonText}>ログアウト</Text>
+            </>
+          )}
+        </TouchableOpacity>
+      </View>
     </SafeAreaView>
   );
 }
 
-function PersonalityTrait({ title, description, value }) {
+function PersonalityTrait({
+  title,
+  description,
+  value,
+}: PersonalityTraitProps) {
   return (
     <View style={styles.traitContainer}>
       <View style={styles.traitHeader}>
@@ -98,12 +143,7 @@ function PersonalityTrait({ title, description, value }) {
         <Text style={styles.traitDescription}>{description}</Text>
       </View>
       <View style={styles.progressBar}>
-        <View 
-          style={[
-            styles.progressFill, 
-            { width: `${value * 100}%` }
-          ]} 
-        />
+        <View style={[styles.progressFill, { width: `${value * 100}%` }]} />
       </View>
     </View>
   );
@@ -212,5 +252,27 @@ const styles = StyleSheet.create({
   progressFill: {
     height: '100%',
     backgroundColor: '#000',
+  },
+  footer: {
+    padding: 20,
+    borderTopWidth: 1,
+    borderTopColor: '#eee',
+  },
+  logoutButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 15,
+    paddingHorizontal: 30,
+    borderRadius: 25,
+    backgroundColor: '#fff',
+    borderWidth: 1,
+    borderColor: '#000',
+    gap: 10,
+  },
+  logoutButtonText: {
+    color: '#000',
+    fontSize: 16,
+    fontWeight: '600',
   },
 });
