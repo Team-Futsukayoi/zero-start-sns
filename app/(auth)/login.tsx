@@ -8,7 +8,7 @@ export default function LoginScreen() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [mode, setMode] = useState<LoginMode>('signIn');
-  const { signIn, signUp, signInAnonymously, loading, error } = useAuth();
+  const { signIn, signUp, loading, error } = useAuth();
 
   const handleSubmit = async () => {
     if (mode === 'signIn') {
@@ -45,7 +45,6 @@ export default function LoginScreen() {
         onPasswordChange={setPassword}
         onSubmit={handleSubmit}
         onToggleMode={toggleMode}
-        onAnonymousLogin={signInAnonymously}
       />
     </AuthTemplate>
   );
