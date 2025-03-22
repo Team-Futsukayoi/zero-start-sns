@@ -16,7 +16,6 @@ export type AuthError = {
  * @param error - エラー情報
  * @param signUp - サインアップ関数
  * @param signIn - サインイン関数
- * @param signInAnonymously - 匿名サインイン関数
  * @param signOut - サインアウト関数
  */
 export interface AuthHookReturn {
@@ -24,7 +23,6 @@ export interface AuthHookReturn {
   error: AuthError;
   signUp: (email: string, password: string) => Promise<void>;
   signIn: (email: string, password: string) => Promise<void>;
-  signInAnonymously: () => Promise<void>;
   signOut: () => Promise<void>;
 }
 
