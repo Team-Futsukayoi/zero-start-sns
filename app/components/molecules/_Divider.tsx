@@ -1,6 +1,6 @@
 import React from 'react';
 import { View, StyleSheet } from 'react-native';
-import { Text } from '../atoms/Text';
+import { Text } from '../atoms/_Text';
 import { LOGIN_STYLE_CONSTANTS } from '../../../types/screens';
 
 const { SPACING, FONT_SIZE } = LOGIN_STYLE_CONSTANTS;
@@ -18,6 +18,8 @@ export const Divider: React.FC<DividerProps> = ({ text }) => {
     </View>
   );
 };
+
+export default Divider;
 
 const styles = StyleSheet.create({
   divider: {

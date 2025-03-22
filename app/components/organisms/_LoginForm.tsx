@@ -1,9 +1,9 @@
 import React from 'react';
 import { View, StyleSheet } from 'react-native';
-import { Input } from '../atoms/Input';
-import { Button } from '../atoms/Button';
-import { Text } from '../atoms/Text';
-import { Divider } from '../molecules/Divider';
+import { Input } from '../atoms/_Input';
+import { Button } from '../atoms/_Button';
+import { Text } from '../atoms/_Text';
+import { Divider } from '../molecules/_Divider';
 import {
   LoginMode,
   LOGIN_MESSAGES,
@@ -73,6 +73,8 @@ export const LoginForm: React.FC<LoginFormProps> = ({
     </View>
   );
 };
+
+export default LoginForm;
 
 const styles = StyleSheet.create({
   form: {
