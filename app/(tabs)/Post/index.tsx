@@ -1,37 +1,101 @@
 import { useState } from 'react';
-import { View, Text, StyleSheet, TextInput, Pressable, Image } from 'react-native';
+import {
+  View,
+  Text,
+  StyleSheet,
+  TextInput,
+  Pressable,
+  Image,
+  Alert,
+} from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
 import { Send, Image as ImageIcon } from 'lucide-react-native';
+import { supabase } from '../../../lib/supabase';
+import { useSession } from '../../../hooks/useSession';
 
+/**
+ * 投稿画面コンポーネント
+ * ユーザーが新しい投稿を作成するための画面
+ * @returns 投稿画面のJSXエレメント
+ */
 export default function PostScreen() {
-  const [text, setText] = useState('');
+  const [text, setText] = useState<string>('');
+  const [isPosting, setIsPosting] = useState<boolean>(false);
+  const { session } = useSession();
 
-  const handlePost = () => {
-    // TODO: Implement post creation with Supabase
-    router.back();
+  /**
+   * 投稿を作成する処理
+   * Supabaseに投稿データを保存し、成功時にホーム画面に戻る
+   */
+  const handlePost = async (): Promise<void> => {
+    if (!session?.user) {
+      Alert.alert('エラー', 'ログインが必要です');
+      return;
+    }
+
+    if (!text.trim()) {
+      Alert.alert('エラー', '投稿内容を入力してください');
+      return;
+    }
+
+    try {
+      setIsPosting(true);
+
+      const { data, error } = await supabase
+        .from('posts')
+        .insert({
+          text: text.trim(),
+          user_id: session.user.id,
+        })
+        .select();
+
+      if (error) {
+        throw error;
+      }
+
+      Alert.alert('成功', '投稿が完了しました');
+      router.back();
+    } catch (error) {
+      console.error('投稿エラー:', error);
+      Alert.alert(
+        'エラー',
+        '投稿に失敗しました。しばらくしてからもう一度お試しください。'
+      );
+    } finally {
+      setIsPosting(false);
+    }
   };
 
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.header}>
         <Text style={styles.headerTitle}>新規投稿</Text>
-        <Pressable 
-          style={[styles.postButton, !text && styles.postButtonDisabled]}
+        <Pressable
+          style={[
+            styles.postButton,
+            (!text || isPosting) && styles.postButtonDisabled,
+          ]}
           onPress={handlePost}
-          disabled={!text}
+          disabled={!text || isPosting}
         >
-          <Text style={styles.postButtonText}>投稿</Text>
+          <Text style={styles.postButtonText}>
+            {isPosting ? '投稿中...' : '投稿'}
+          </Text>
         </Pressable>
       </View>
 
       <View style={styles.content}>
         <View style={styles.userInfo}>
-          <Image 
-            source={{ uri: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=64&h=64&fit=crop' }}
+          <Image
+            source={{
+              uri: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=64&h=64&fit=crop',
+            }}
             style={styles.avatar}
           />
-          <Text style={styles.username}>匿名ユーザー</Text>
+          <Text style={styles.username}>
+            {session?.user?.email?.split('@')[0] || '匿名ユーザー'}
+          </Text>
         </View>
 
         <TextInput
@@ -41,10 +105,11 @@ export default function PostScreen() {
           multiline
           value={text}
           onChangeText={setText}
+          editable={!isPosting}
         />
 
         <View style={styles.toolbar}>
-          <Pressable style={styles.toolbarButton}>
+          <Pressable style={styles.toolbarButton} disabled={isPosting}>
             <ImageIcon size={24} color="#666" />
             <Text style={styles.toolbarButtonText}>画像を追加</Text>
           </Pressable>
