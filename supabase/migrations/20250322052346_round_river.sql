@@ -86,11 +86,11 @@ CREATE TABLE IF NOT EXISTS profiles (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   created_at timestamptz DEFAULT now(),
   user_id uuid REFERENCES auth.users(id) ON DELETE CASCADE UNIQUE,
-  extroversion float DEFAULT 0 CHECK (extroversion >= -1 AND extroversion <= 1),
-  openness float DEFAULT 0 CHECK (openness >= -1 AND openness <= 1),
-  conscientiousness float DEFAULT 0 CHECK (conscientiousness >= -1 AND conscientiousness <= 1),
-  optimism float DEFAULT 0 CHECK (optimism >= -1 AND optimism <= 1),
-  independence float DEFAULT 0 CHECK (independence >= -1 AND independence <= 1)
+  extroversion integer DEFAULT 0 CHECK (extroversion >= -10 AND extroversion <= 10),
+  openness integer DEFAULT 0 CHECK (openness >= -10 AND openness <= 10),
+  conscientiousness integer DEFAULT 0 CHECK (conscientiousness >= -10 AND conscientiousness <= 10),
+  optimism integer DEFAULT 0 CHECK (optimism >= -10 AND optimism <= 10),
+  independence integer DEFAULT 0 CHECK (independence >= -10 AND independence <= 10)
 );
 
 ALTER TABLE profiles ENABLE ROW LEVEL SECURITY;
@@ -126,7 +126,7 @@ CREATE TRIGGER on_auth_user_created
 CREATE OR REPLACE FUNCTION update_user_personality(
   p_user_id uuid,
   p_trait text,
-  p_value float
+  p_value integer
 ) RETURNS void AS $$
 BEGIN
   UPDATE profiles

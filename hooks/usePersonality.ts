@@ -66,12 +66,43 @@ export const usePersonality = (postId: string) => {
 
       if (evaluationError) throw evaluationError;
 
-      // 投稿作成者のプロフィールを直接更新
+      // 投稿者の全評価を取得して合計値を計算
+      const { data: evaluations, error: evaluationsError } = await supabase
+        .from('evaluations')
+        .select('value')
+        .eq('user_id', post.user_id)
+        .eq('trait', trait);
+
+      if (evaluationsError) throw evaluationsError;
+
+      // 合計値を計算
+      const totalValue = evaluations.reduce((sum, evaluation) => sum + evaluation.value, 0);
+
+      // プロフィールを更新
+      const updateData: Record<string, number> = {};
+      switch (trait) {
+        case 'extroversion':
+          updateData.extroversion = totalValue;
+          break;
+        case 'openness':
+          updateData.openness = totalValue;
+          break;
+        case 'conscientiousness':
+          updateData.conscientiousness = totalValue;
+          break;
+        case 'optimism':
+          updateData.optimism = totalValue;
+          break;
+        case 'independence':
+          updateData.independence = totalValue;
+          break;
+        default:
+          throw new Error(`無効な特性名です: ${trait}`);
+      }
+
       const { error: profileError } = await supabase
         .from('profiles')
-        .update({
-          [trait]: value
-        })
+        .update(updateData)
         .eq('user_id', post.user_id);
 
       if (profileError) {
