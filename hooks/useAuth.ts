@@ -56,7 +56,7 @@ export const useAuth = (): AuthHookReturn => {
         return;
       }
 
-      router.replace('/(tabs)');
+      router.replace('/(tabs)/Home');
     } catch (error) {
       console.error('SignUp Error:', error);
       setError({
@@ -100,7 +100,7 @@ export const useAuth = (): AuthHookReturn => {
         return;
       }
 
-      router.replace('/(tabs)');
+      router.replace('/(tabs)/Home');
     } catch (error) {
       console.error('SignIn Error:', error);
       setError({
@@ -128,7 +128,7 @@ export const useAuth = (): AuthHookReturn => {
         return;
       }
 
-      router.replace('/login');
+      router.replace('/(auth)/login');
     } catch (error) {
       console.error('SignOut Error:', error);
       setError({
