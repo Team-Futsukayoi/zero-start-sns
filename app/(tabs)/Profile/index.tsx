@@ -25,13 +25,14 @@ import { PersonalityTrait } from '../../../components/PersonalityTrait';
  * @returns プロフィール画面
  */
 export default function ProfileScreen() {
-  const { user, signOut, loading } = useAuth();
+  const { user, signOut, loading: authLoading } = useAuth();
 
   // プロフィールデータを取得
   const {
     profileData,
-    isLoading,
+    isLoading: profileLoading,
     refreshing,
+    error,
     onRefresh: handleProfileRefresh,
   } = useProfile(user);
 
@@ -57,10 +58,25 @@ export default function ProfileScreen() {
     }
   }, [user, handleProfileRefresh, refetchStats]);
 
-  if (isLoading || !user) {
+  // ローディング中
+  if (profileLoading || traitsLoading) {
     return (
-      <SafeAreaView style={[styles.container, styles.loadingContainer]}>
-        <ActivityIndicator size="large" color="#0000ff" />
+      <SafeAreaView style={styles.container}>
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size="large" color="#4ecdc4" />
+        </View>
+      </SafeAreaView>
+    );
+  }
+
+  // エラー表示
+  if (error) {
+    return (
+      <SafeAreaView style={styles.container}>
+        <View style={styles.errorContainer}>
+          <Text style={styles.errorText}>エラーが発生しました</Text>
+          <Text style={styles.errorDetail}>{error.message}</Text>
+        </View>
       </SafeAreaView>
     );
   }
@@ -128,7 +144,7 @@ export default function ProfileScreen() {
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>性格分析</Text>
           {traitsLoading ? (
-            <ActivityIndicator size="small" color="#0000ff" />
+            <ActivityIndicator size="small" color="#4ecdc4" />
           ) : (
             <View style={styles.personalityContainer}>
               {personalityTraits.map((trait) => (
@@ -150,9 +166,9 @@ export default function ProfileScreen() {
         <TouchableOpacity
           style={styles.logoutButton}
           onPress={signOut}
-          disabled={loading}
+          disabled={authLoading}
         >
-          {loading ? (
+          {authLoading ? (
             <ActivityIndicator color="#000" />
           ) : (
             <>
@@ -172,8 +188,25 @@ const styles = StyleSheet.create({
     backgroundColor: '#fff',
   },
   loadingContainer: {
+    flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
+  },
+  errorContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 20,
+  },
+  errorText: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    marginBottom: 10,
+  },
+  errorDetail: {
+    fontSize: 14,
+    color: '#666',
+    textAlign: 'center',
   },
   header: {
     flexDirection: 'row',
@@ -260,13 +293,13 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    padding: 15,
+    gap: 8,
+    padding: 12,
     backgroundColor: '#f5f5f5',
-    borderRadius: 10,
+    borderRadius: 8,
   },
   logoutButtonText: {
     fontSize: 16,
     fontWeight: '500',
-    marginLeft: 10,
   },
 });

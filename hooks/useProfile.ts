@@ -4,6 +4,17 @@ import { ProfileData } from '../types/profile';
 import { User } from '@supabase/supabase-js';
 
 /**
+ * デフォルトのプロフィール値
+ */
+const DEFAULT_PROFILE = {
+  extroversion: 0,
+  openness: 0,
+  conscientiousness: 0,
+  optimism: 0,
+  independence: 0,
+};
+
+/**
  * プロフィールフックの戻り値の型
  * @param {ProfileData | null} profileData - プロフィールデータ
  * @param {boolean} isLoading - ローディング状態
@@ -48,11 +59,51 @@ export const useProfile = (user: User | null): UseProfileReturn => {
       // プロフィール情報を取得
       const { data: profileData, error: profileError } = await supabase
         .from('profiles')
-        .select('username, avatar_url, bio')
+        .select(
+          'username, avatar_url, bio, extroversion, openness, conscientiousness, optimism, independence'
+        )
         .eq('user_id', user.id)
         .single();
 
-      if (profileError) throw profileError;
+      if (profileError) {
+        if (profileError.code === 'PGRST116') {
+          // プロフィールが存在しない場合は新しく作成
+          const { data: newProfile, error: createError } = await supabase
+            .from('profiles')
+            .insert([
+              {
+                user_id: user.id,
+                username: '匿名ユーザー',
+                bio: 'あなたの個性は、他者との関わりの中で見つかる',
+                ...DEFAULT_PROFILE,
+              },
+            ])
+            .select()
+            .single();
+
+          if (createError) {
+            throw createError;
+          }
+
+          // 新しいプロフィールをセット
+          const profileObj = {
+            username: newProfile.username,
+            avatar_url: newProfile.avatar_url,
+            bio: newProfile.bio,
+            stats: {
+              posts: 0,
+              evaluations: 0,
+              received: 0,
+            },
+          };
+
+          setProfileData(profileObj);
+          // 新規作成したので、この時点で処理を終了
+          return;
+        } else {
+          throw profileError;
+        }
+      }
 
       // 投稿数を取得
       const { count: postsCount, error: postsError } = await supabase

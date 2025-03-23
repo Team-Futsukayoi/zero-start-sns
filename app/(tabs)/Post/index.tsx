@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import React, { useState } from 'react';
 import {
   View,
   Text,
@@ -7,10 +7,14 @@ import {
   Pressable,
   Image,
   Alert,
+  KeyboardAvoidingView,
+  Platform,
+  TouchableWithoutFeedback,
+  Keyboard,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
-import { Send, Image as ImageIcon } from 'lucide-react-native';
+import { Image as ImageIcon } from 'lucide-react-native';
 import { supabase } from '../../../lib/supabase';
 import { useSession } from '../../../hooks/useSession';
 
@@ -24,10 +28,6 @@ export default function PostScreen() {
   const [isPosting, setIsPosting] = useState<boolean>(false);
   const { session } = useSession();
 
-  /**
-   * 投稿を作成する処理
-   * Supabaseに投稿データを保存し、成功時にホーム画面に戻る
-   */
   const handlePost = async (): Promise<void> => {
     if (!session?.user) {
       Alert.alert('エラー', 'ログインが必要です');
@@ -68,54 +68,61 @@ export default function PostScreen() {
   };
 
   return (
-    <SafeAreaView style={styles.container}>
-      <View style={styles.header}>
-        <Text style={styles.headerTitle}>新規投稿</Text>
-        <Pressable
-          style={[
-            styles.postButton,
-            (!text || isPosting) && styles.postButtonDisabled,
-          ]}
-          onPress={handlePost}
-          disabled={!text || isPosting}
-        >
-          <Text style={styles.postButtonText}>
-            {isPosting ? '投稿中...' : '投稿'}
-          </Text>
-        </Pressable>
-      </View>
+    <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
+      <KeyboardAvoidingView
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        style={{ flex: 1 }}
+      >
+        <SafeAreaView style={styles.container}>
+          <View style={styles.header}>
+            <Text style={styles.headerTitle}>新規投稿</Text>
+            <Pressable
+              style={[
+                styles.postButton,
+                (!text || isPosting) && styles.postButtonDisabled,
+              ]}
+              onPress={handlePost}
+              disabled={!text || isPosting}
+            >
+              <Text style={styles.postButtonText}>
+                {isPosting ? '投稿中...' : '投稿'}
+              </Text>
+            </Pressable>
+          </View>
 
-      <View style={styles.content}>
-        <View style={styles.userInfo}>
-          <Image
-            source={{
-              uri: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=64&h=64&fit=crop',
-            }}
-            style={styles.avatar}
-          />
-          <Text style={styles.username}>
-            {session?.user?.email?.split('@')[0] || '匿名ユーザー'}
-          </Text>
-        </View>
+          <View style={styles.content}>
+            <View style={styles.userInfo}>
+              <Image
+                source={{
+                  uri: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=64&h=64&fit=crop',
+                }}
+                style={styles.avatar}
+              />
+              <Text style={styles.username}>
+                {session?.user?.email?.split('@')[0] || '匿名ユーザー'}
+              </Text>
+            </View>
 
-        <TextInput
-          style={styles.input}
-          placeholder="今何を考えていますか？"
-          placeholderTextColor="#999"
-          multiline
-          value={text}
-          onChangeText={setText}
-          editable={!isPosting}
-        />
+            <TextInput
+              style={styles.input}
+              placeholder="今何を考えていますか？"
+              placeholderTextColor="#999"
+              multiline
+              value={text}
+              onChangeText={setText}
+              editable={!isPosting}
+            />
 
-        <View style={styles.toolbar}>
-          <Pressable style={styles.toolbarButton} disabled={isPosting}>
-            <ImageIcon size={24} color="#666" />
-            <Text style={styles.toolbarButtonText}>画像を追加</Text>
-          </Pressable>
-        </View>
-      </View>
-    </SafeAreaView>
+            <View style={styles.toolbar}>
+              <Pressable style={styles.toolbarButton} disabled={isPosting}>
+                <ImageIcon size={24} color="#666" />
+                <Text style={styles.toolbarButtonText}>画像を追加</Text>
+              </Pressable>
+            </View>
+          </View>
+        </SafeAreaView>
+      </KeyboardAvoidingView>
+    </TouchableWithoutFeedback>
   );
 }
 

@@ -1,4 +1,4 @@
-import { User } from '@supabase/supabase-js';
+import { Session, User } from '@supabase/supabase-js';
 
 /**
  * 認証エラーの型定義
@@ -17,6 +17,8 @@ export type AuthError = {
  * @param user - 現在のユーザー情報
  * @param loading - ローディング状態
  * @param error - エラー情報
+ * @param session - セッション情報
+ * @param user - ユーザー情報
  * @param signUp - サインアップ関数
  * @param signIn - サインイン関数
  * @param signOut - サインアウト関数
@@ -25,6 +27,7 @@ export interface AuthHookReturn {
   user: User | null;
   loading: boolean;
   error: AuthError;
+  session: Session | null;
   signUp: (email: string, password: string) => Promise<void>;
   signIn: (email: string, password: string) => Promise<void>;
   signOut: () => Promise<void>;

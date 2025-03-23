@@ -7,47 +7,52 @@ import {
 } from '../utils/auth';
 import { supabase } from '../lib/supabase';
 import { router } from 'expo-router';
-import { User } from '@supabase/supabase-js';
+import { Session, User } from '@supabase/supabase-js';
 
 /**
  * 認証機能を提供するカスタムフック
  * @returns 認証関連の状態と関数を含むオブジェクト
  */
 export const useAuth = (): AuthHookReturn => {
-  const [loading, setLoading] = useState<boolean>(false);
+  const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<AuthError>(null);
+  const [session, setSession] = useState<Session | null>(null);
   const [user, setUser] = useState<User | null>(null);
 
   useEffect(() => {
-    // 現在のユーザー情報を取得
-    const getCurrentUser = async () => {
+    // 初期セッションとユーザー情報の取得
+    const initAuth = async () => {
       try {
-        const {
-          data: { user },
-          error,
-        } = await supabase.auth.getUser();
-        if (error) {
-          console.error('ユーザー取得エラー:', error);
-          return;
+        // セッション情報を取得
+        const { data: sessionData } = await supabase.auth.getSession();
+        setSession(sessionData.session);
+
+        // ユーザー情報を取得
+        if (sessionData.session?.user) {
+          setUser(sessionData.session.user);
+        } else {
+          const { data: userData } = await supabase.auth.getUser();
+          setUser(userData.user);
         }
-        setUser(user);
       } catch (error) {
-        console.error('ユーザー取得中にエラーが発生しました:', error);
+        console.error('認証情報の取得に失敗しました:', error);
+      } finally {
+        setLoading(false);
       }
     };
 
-    getCurrentUser();
+    initAuth();
 
-    // ユーザーの認証状態変更を監視
-    const { data: authListener } = supabase.auth.onAuthStateChange(
-      (event, session) => {
-        setUser(session?.user || null);
-      }
-    );
+    // 認証状態の変更を監視
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((_event, session) => {
+      setSession(session);
+      setUser(session?.user || null);
+      setLoading(false);
+    });
 
-    return () => {
-      authListener.subscription.unsubscribe();
-    };
+    return () => subscription.unsubscribe();
   }, []);
 
   /**
@@ -178,6 +183,7 @@ export const useAuth = (): AuthHookReturn => {
     user,
     loading,
     error,
+    session,
     signUp,
     signIn,
     signOut,
