@@ -1,3 +1,5 @@
+import { User } from '@supabase/supabase-js';
+
 /**
  * 認証エラーの型定義
  *
@@ -12,6 +14,7 @@ export type AuthError = {
 /**
  * 認証フックの戻り値の型定義
  *
+ * @param user - 現在のユーザー情報
  * @param loading - ローディング状態
  * @param error - エラー情報
  * @param signUp - サインアップ関数
@@ -19,6 +22,7 @@ export type AuthError = {
  * @param signOut - サインアウト関数
  */
 export interface AuthHookReturn {
+  user: User | null;
   loading: boolean;
   error: AuthError;
   signUp: (email: string, password: string) => Promise<void>;
