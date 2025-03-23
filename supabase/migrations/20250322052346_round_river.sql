@@ -122,20 +122,47 @@ CREATE TRIGGER on_auth_user_created
   AFTER INSERT ON auth.users
   FOR EACH ROW EXECUTE FUNCTION public.handle_new_user();
 
--- Create function to update user personality
-CREATE OR REPLACE FUNCTION update_user_personality(
-  p_user_id uuid,
-  p_trait text,
-  p_value integer
-) RETURNS void AS $$
+-- Create function to update profile trait
+CREATE OR REPLACE FUNCTION update_profile_trait()
+RETURNS TRIGGER AS $$
+DECLARE
+  new_value integer;
 BEGIN
+  -- 新しい値を計算
+  new_value := CASE 
+    WHEN NEW.trait = 'extroversion' THEN profiles.extroversion + NEW.value
+    WHEN NEW.trait = 'openness' THEN profiles.openness + NEW.value
+    WHEN NEW.trait = 'conscientiousness' THEN profiles.conscientiousness + NEW.value
+    WHEN NEW.trait = 'optimism' THEN profiles.optimism + NEW.value
+    WHEN NEW.trait = 'independence' THEN profiles.independence + NEW.value
+  END;
+
+  -- 値を-10から10の範囲に制限
+  new_value := GREATEST(-10, LEAST(10, new_value));
+
+  -- プロフィールを更新
   UPDATE profiles
   SET
-    extroversion = CASE WHEN p_trait = 'extroversion' THEN p_value ELSE extroversion END,
-    openness = CASE WHEN p_trait = 'openness' THEN p_value ELSE openness END,
-    conscientiousness = CASE WHEN p_trait = 'conscientiousness' THEN p_value ELSE conscientiousness END,
-    optimism = CASE WHEN p_trait = 'optimism' THEN p_value ELSE optimism END,
-    independence = CASE WHEN p_trait = 'independence' THEN p_value ELSE independence END
-  WHERE user_id = p_user_id;
+    extroversion = CASE WHEN NEW.trait = 'extroversion' THEN new_value ELSE profiles.extroversion END,
+    openness = CASE WHEN NEW.trait = 'openness' THEN new_value ELSE profiles.openness END,
+    conscientiousness = CASE WHEN NEW.trait = 'conscientiousness' THEN new_value ELSE profiles.conscientiousness END,
+    optimism = CASE WHEN NEW.trait = 'optimism' THEN new_value ELSE profiles.optimism END,
+    independence = CASE WHEN NEW.trait = 'independence' THEN new_value ELSE profiles.independence END
+  WHERE user_id = (
+    SELECT user_id FROM posts WHERE id = NEW.post_id
+  );
+  RETURN NEW;
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
+
+-- Create trigger for profile updates
+DROP TRIGGER IF EXISTS on_evaluation_insert ON evaluations;
+CREATE TRIGGER on_evaluation_insert
+  AFTER INSERT ON evaluations
+  FOR EACH ROW
+  EXECUTE FUNCTION update_profile_trait();
+
+-- Grant necessary permissions
+GRANT USAGE ON SCHEMA public TO authenticated;
+GRANT ALL ON ALL TABLES IN SCHEMA public TO authenticated;
+GRANT ALL ON ALL SEQUENCES IN SCHEMA public TO authenticated;

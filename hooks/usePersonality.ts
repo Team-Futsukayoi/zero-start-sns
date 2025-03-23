@@ -16,19 +16,20 @@ export const usePersonality = (postId: string) => {
   const submitRating = async (trait: string, value: number) => {
     try {
       setIsSubmitting(true);
-      
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) throw new Error('ユーザーが認証されていません');
+      // 評価値を-1から1の範囲に制限
+      const limitedValue = Math.max(-1, Math.min(1, value));
+      console.log('評価を開始:', { trait, value: limitedValue, postId });
 
-      // 投稿の作成者を取得
-      const { data: post, error: postError } = await supabase
-        .from('posts')
-        .select('user_id')
-        .eq('id', postId)
-        .single();
-
-      if (postError) throw postError;
-      if (!post) throw new Error('投稿が見つかりません');
+      // ユーザー情報を取得
+      const { data: { user }, error: userError } = await supabase.auth.getUser();
+      if (userError) {
+        console.error('ユーザー取得エラー:', userError);
+        throw userError;
+      }
+      if (!user) {
+        console.error('ユーザーが認証されていません');
+        throw new Error('ユーザーが認証されていません');
+      }
 
       // 既存の評価を確認
       const { data: existingEvaluation, error: existingCheckError } = await supabase
@@ -40,31 +41,58 @@ export const usePersonality = (postId: string) => {
         .single();
 
       if (existingCheckError && existingCheckError.code !== 'PGRST116') { // PGRST116は「結果が見つからない」エラー
+        console.error('既存の評価確認エラー:', existingCheckError);
         throw existingCheckError;
       }
 
-      let evaluationError;
       if (existingEvaluation) {
+        console.log('既存の評価を更新:', existingEvaluation.id);
         // 既存の評価を更新
-        const { error } = await supabase
+        const { error: updateError } = await supabase
           .from('evaluations')
-          .update({ value })
+          .update({ value: limitedValue })
           .eq('id', existingEvaluation.id);
-        evaluationError = error;
+
+        if (updateError) {
+          console.error('評価の更新エラー:', updateError);
+          throw updateError;
+        }
       } else {
-        // 新規評価を作成
-        const { error } = await supabase
+        console.log('新しい評価を作成');
+        // 新しい評価を作成
+        const { error: insertError } = await supabase
           .from('evaluations')
           .insert({
             post_id: postId,
             user_id: user.id,
             trait,
-            value,
+            value: limitedValue,
           });
-        evaluationError = error;
+
+        if (insertError) {
+          console.error('評価の作成エラー:', insertError);
+          throw insertError;
+        }
       }
 
-      if (evaluationError) throw evaluationError;
+      // 投稿の情報を取得
+      const { data: post, error: postError } = await supabase
+        .from('posts')
+        .select('user_id')
+        .eq('id', postId)
+        .single();
+
+      if (postError) {
+        console.error('投稿の取得エラー:', postError);
+        throw postError;
+      }
+
+      if (!post) {
+        console.error('投稿が見つかりません');
+        throw new Error('投稿が見つかりません');
+      }
+
+      console.log('投稿情報:', post);
 
       // 投稿者の現在のプロフィールを取得
       const { data: profile, error: profileError } = await supabase
@@ -73,71 +101,93 @@ export const usePersonality = (postId: string) => {
         .eq('user_id', post.user_id)
         .single();
 
-      if (profileError) throw profileError;
-      if (!profile) throw new Error('プロフィールが見つかりません');
+      if (profileError) {
+        console.error('プロフィール取得エラー:', profileError);
+        throw profileError;
+      }
 
-      console.log('Current profile:', profile);
-      console.log('Trait:', trait);
-      console.log('Value:', value);
+      if (!profile) {
+        console.error('プロフィールが見つかりません');
+        throw new Error('プロフィールが見つかりません');
+      }
+
+      console.log('現在のプロフィール:', profile);
+      console.log('評価対象の特性:', trait);
+      console.log('評価値:', limitedValue);
 
       // プロフィールを更新（投稿者のプロフィールを更新）
       const currentValue = profile[trait as keyof typeof profile];
-      const newValue = Math.max(-10, Math.min(10, currentValue + value));
+      const newValue = currentValue + limitedValue;
       
-      const updateData = {
-        [trait as keyof typeof profile]: newValue
-      };
+      // 更新対象の特性のみを含むオブジェクトを作成
+      const updateData: Record<string, number> = {};
+      updateData[trait] = newValue;
 
-      console.log('Update data:', updateData);
-      console.log('User ID:', post.user_id);
-      console.log('Current value:', currentValue);
-      console.log('New value:', newValue);
+      console.log('更新データ:', updateData);
+      console.log('ユーザーID:', post.user_id);
+      console.log('現在の値:', currentValue);
+      console.log('新しい値:', newValue);
 
-      const { error: updateError } = await supabase
-        .from('profiles')
-        .update(updateData)
-        .eq('user_id', post.user_id);
+      // 更新操作を実行（3回までリトライ）
+      let retryCount = 0;
+      let updateSuccess = false;
+      let lastError = null;
 
-      if (updateError) {
-        console.error('プロフィール更新エラー:', updateError);
-        console.error('更新データ:', updateData);
-        throw updateError;
-      }
+      while (retryCount < 3 && !updateSuccess) {
+        try {
+          const { error: updateError } = await supabase
+            .from('profiles')
+            .update(updateData)
+            .eq('user_id', post.user_id);
 
-      // 少し待機してから更新後のプロフィールを確認
-      await new Promise(resolve => setTimeout(resolve, 1000));
+          if (updateError) {
+            console.error(`プロフィール更新エラー (試行 ${retryCount + 1}/3):`, updateError);
+            lastError = updateError;
+            retryCount++;
+            // 少し待ってから再試行
+            await new Promise(resolve => setTimeout(resolve, 1000));
+            continue;
+          }
 
-      // キャッシュをクリアしてから確認
-      const { data: updatedProfile, error: profileCheckError } = await supabase
-        .from('profiles')
-        .select('extroversion, openness, conscientiousness, optimism, independence')
-        .eq('user_id', post.user_id)
-        .single()
-        .throwOnError();
-
-      if (profileCheckError) {
-        console.error('更新後のプロフィール確認エラー:', profileCheckError);
-      } else {
-        console.log('Updated profile:', updatedProfile);
-        // 更新が反映されているか確認
-        if (updatedProfile[trait as keyof typeof profile] !== newValue) {
-          console.warn('プロフィールの更新が反映されていません');
-          // 再試行
-          const { data: retryProfile, error: retryError } = await supabase
+          // 更新が成功したか確認
+          const { data: checkProfile, error: checkError } = await supabase
             .from('profiles')
             .select('extroversion, openness, conscientiousness, optimism, independence')
             .eq('user_id', post.user_id)
-            .single()
-            .throwOnError();
-          
-          if (!retryError) {
-            console.log('Retry profile:', retryProfile);
+            .single();
+
+          if (checkError) {
+            console.error('更新確認エラー:', checkError);
+            lastError = checkError;
+            retryCount++;
+            continue;
           }
+
+          if (checkProfile[trait as keyof typeof profile] === newValue) {
+            updateSuccess = true;
+            console.log('プロフィール更新成功:', checkProfile);
+          } else {
+            console.warn(`更新値が一致しません (試行 ${retryCount + 1}/3):`, {
+              expected: newValue,
+              actual: checkProfile[trait as keyof typeof profile]
+            });
+            retryCount++;
+            await new Promise(resolve => setTimeout(resolve, 1000));
+          }
+        } catch (error) {
+          console.error(`予期せぬエラー (試行 ${retryCount + 1}/3):`, error);
+          lastError = error;
+          retryCount++;
+          await new Promise(resolve => setTimeout(resolve, 1000));
         }
       }
 
+      if (!updateSuccess) {
+        throw lastError || new Error('プロフィールの更新に失敗しました');
+      }
+
       // 成功したらローカルの状態も更新
-      updateRating(trait, value);
+      updateRating(trait, limitedValue);
     } catch (error) {
       console.error('評価の保存に失敗しました:', error);
       throw error;
