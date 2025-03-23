@@ -18,7 +18,6 @@ export type AuthError = {
  * @param loading - ローディング状態
  * @param error - エラー情報
  * @param session - セッション情報
- * @param user - ユーザー情報
  * @param signUp - サインアップ関数
  * @param signIn - サインイン関数
  * @param signOut - サインアウト関数
