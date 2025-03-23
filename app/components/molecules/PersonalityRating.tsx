@@ -6,12 +6,14 @@ type PersonalityRatingProps = {
   trait: PersonalityTrait;
   value: number;
   onValueChange: (value: number) => void;
+  disabled?: boolean;
 };
 
 const PersonalityRating: React.FC<PersonalityRatingProps> = ({
   trait,
   value,
   onValueChange,
+  disabled = false,
 }) => {
   return (
     <View style={styles.container}>
@@ -22,10 +24,18 @@ const PersonalityRating: React.FC<PersonalityRatingProps> = ({
             styles.button,
             value === -1 && styles.selectedButton,
             styles.negativeButton,
+            disabled && styles.disabledButton,
           ]}
-          onPress={() => onValueChange(-1)}
+          onPress={() => !disabled && onValueChange(-1)}
+          disabled={disabled}
         >
-          <Text style={[styles.buttonText, value === -1 && styles.selectedButtonText]}>
+          <Text
+            style={[
+              styles.buttonText,
+              value === -1 && styles.selectedButtonText,
+              disabled && styles.disabledButtonText,
+            ]}
+          >
             {trait.negative}
           </Text>
         </Pressable>
@@ -34,10 +44,18 @@ const PersonalityRating: React.FC<PersonalityRatingProps> = ({
             styles.button,
             value === 1 && styles.selectedButton,
             styles.positiveButton,
+            disabled && styles.disabledButton,
           ]}
-          onPress={() => onValueChange(1)}
+          onPress={() => !disabled && onValueChange(1)}
+          disabled={disabled}
         >
-          <Text style={[styles.buttonText, value === 1 && styles.selectedButtonText]}>
+          <Text
+            style={[
+              styles.buttonText,
+              value === 1 && styles.selectedButtonText,
+              disabled && styles.disabledButtonText,
+            ]}
+          >
             {trait.positive}
           </Text>
         </Pressable>
@@ -98,6 +116,14 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
     fontWeight: '600',
   },
+  disabledButton: {
+    opacity: 0.5,
+    backgroundColor: '#f0f0f0',
+    borderColor: '#ddd',
+  },
+  disabledButtonText: {
+    color: '#999',
+  },
 });
 
-export default PersonalityRating; 
+export default PersonalityRating;
