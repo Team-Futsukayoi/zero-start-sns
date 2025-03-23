@@ -91,27 +91,27 @@ export default function ProfileScreen() {
           <View style={styles.personalityContainer}>
             <PersonalityTrait
               title="外向性"
-              description="社交的 / 内向的"
+              description="内向的 / 社交的"
               value={profile?.extroversion || 0}
             />
             <PersonalityTrait
               title="開放性"
-              description="創造的 / 保守的"
+              description="保守的 / 創造的"
               value={profile?.openness || 0}
             />
             <PersonalityTrait
               title="誠実性"
-              description="計画的 / 気分屋"
+              description="大雑把 / 几帳面"
               value={profile?.conscientiousness || 0}
             />
             <PersonalityTrait
               title="楽観性"
-              description="前向き / 慎重"
+              description="悲観的 / 楽観的"
               value={profile?.optimism || 0}
             />
             <PersonalityTrait
               title="独立性"
-              description="主体的 / 協調的"
+              description="依存性 / 独立性"
               value={profile?.independence || 0}
             />
           </View>
