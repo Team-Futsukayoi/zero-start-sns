@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { AuthError, AuthHookReturn } from '../types/auth';
 import {
   validateEmail,
@@ -7,6 +7,7 @@ import {
 } from '../utils/auth';
 import { supabase } from '../lib/supabase';
 import { router } from 'expo-router';
+import { User } from '@supabase/supabase-js';
 
 /**
  * 認証機能を提供するカスタムフック
@@ -15,6 +16,39 @@ import { router } from 'expo-router';
 export const useAuth = (): AuthHookReturn => {
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<AuthError>(null);
+  const [user, setUser] = useState<User | null>(null);
+
+  useEffect(() => {
+    // 現在のユーザー情報を取得
+    const getCurrentUser = async () => {
+      try {
+        const {
+          data: { user },
+          error,
+        } = await supabase.auth.getUser();
+        if (error) {
+          console.error('ユーザー取得エラー:', error);
+          return;
+        }
+        setUser(user);
+      } catch (error) {
+        console.error('ユーザー取得中にエラーが発生しました:', error);
+      }
+    };
+
+    getCurrentUser();
+
+    // ユーザーの認証状態変更を監視
+    const { data: authListener } = supabase.auth.onAuthStateChange(
+      (event, session) => {
+        setUser(session?.user || null);
+      }
+    );
+
+    return () => {
+      authListener.subscription.unsubscribe();
+    };
+  }, []);
 
   /**
    * サインアップ処理
@@ -141,6 +175,7 @@ export const useAuth = (): AuthHookReturn => {
   };
 
   return {
+    user,
     loading,
     error,
     signUp,
