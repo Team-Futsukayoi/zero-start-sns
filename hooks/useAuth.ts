@@ -162,6 +162,7 @@ export const useAuth = (): AuthHookReturn => {
     loading,
     error,
     session,
+    user: session?.user ?? null,
     signUp,
     signIn,
     signOut,
