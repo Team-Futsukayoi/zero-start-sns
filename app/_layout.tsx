@@ -1,29 +1,17 @@
-import React, { useEffect } from 'react';
-import { Stack, Slot, useRouter, useSegments } from 'expo-router';
+import React from 'react';
+import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { useFrameworkReady } from '@/hooks/useFrameworkReady';
-import { useSession } from '../hooks/useSession';
+import { useAuthRedirect } from '../hooks/useAuthRedirect';
 
-const AUTH_GROUPS = ['(tabs)'];
-
+/**
+ * アプリケーションのルートレイアウト
+ * 認証状態に基づいて適切なルートにリダイレクト
+ */
 export default function RootLayout() {
-  const { session, loading } = useSession();
-  const segments = useSegments();
-  const router = useRouter();
+  const { loading } = useAuthRedirect();
 
   useFrameworkReady();
-
-  useEffect(() => {
-    if (loading) return;
-
-    const inAuthGroup = segments[0] && AUTH_GROUPS.includes(segments[0]);
-
-    if (!session && inAuthGroup) {
-      router.push('/(auth)/login');
-    } else if (session && !inAuthGroup) {
-      router.push('/(tabs)/Home');
-    }
-  }, [session, loading, segments]);
 
   if (loading) {
     return null;
@@ -32,6 +20,7 @@ export default function RootLayout() {
   return (
     <>
       <Stack screenOptions={{ headerShown: false }}>
+        <Stack.Screen name="index" options={{ headerShown: false }} />
         <Stack.Screen name="(auth)" options={{ headerShown: false }} />
         <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
         <Stack.Screen name="+not-found" options={{ title: 'Not Found' }} />
