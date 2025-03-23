@@ -3,6 +3,7 @@ import { useAuth } from '../../hooks/useAuth';
 import { LoginMode, LOGIN_MESSAGES } from '../../types/screens';
 import { AuthTemplate } from '../components/templates/_AuthTemplate';
 import { LoginForm } from '../components/organisms/_LoginForm';
+import { KeyboardAvoidingView, Platform, TouchableWithoutFeedback, Keyboard } from 'react-native';
 
 export default function LoginScreen() {
   const [email, setEmail] = useState('');
@@ -23,29 +24,36 @@ export default function LoginScreen() {
   };
 
   return (
-    <AuthTemplate
-      title={
-        mode === 'signIn'
-          ? LOGIN_MESSAGES.SIGN_IN_TITLE
-          : LOGIN_MESSAGES.SIGN_UP_TITLE
-      }
-      subtitle={
-        mode === 'signIn'
-          ? LOGIN_MESSAGES.SIGN_IN_SUBTITLE
-          : LOGIN_MESSAGES.SIGN_UP_SUBTITLE
-      }
-    >
-      <LoginForm
-        email={email}
-        password={password}
-        mode={mode}
-        loading={loading}
-        error={error}
-        onEmailChange={setEmail}
-        onPasswordChange={setPassword}
-        onSubmit={handleSubmit}
-        onToggleMode={toggleMode}
-      />
-    </AuthTemplate>
+    <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
+      <KeyboardAvoidingView
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        style={{ flex: 1 }}
+      >
+        <AuthTemplate
+          title={
+            mode === 'signIn'
+              ? LOGIN_MESSAGES.SIGN_IN_TITLE
+              : LOGIN_MESSAGES.SIGN_UP_TITLE
+          }
+          subtitle={
+            mode === 'signIn'
+              ? LOGIN_MESSAGES.SIGN_IN_SUBTITLE
+              : LOGIN_MESSAGES.SIGN_UP_SUBTITLE
+          }
+        >
+          <LoginForm
+            email={email}
+            password={password}
+            mode={mode}
+            loading={loading}
+            error={error}
+            onEmailChange={setEmail}
+            onPasswordChange={setPassword}
+            onSubmit={handleSubmit}
+            onToggleMode={toggleMode}
+          />
+        </AuthTemplate>
+      </KeyboardAvoidingView>
+    </TouchableWithoutFeedback>
   );
 }
