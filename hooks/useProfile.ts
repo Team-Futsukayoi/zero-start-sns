@@ -4,17 +4,6 @@ import { ProfileData } from '../types/profile';
 import { User } from '@supabase/supabase-js';
 
 /**
- * デフォルトのプロフィール値
- */
-const DEFAULT_PROFILE = {
-  extroversion: 0,
-  openness: 0,
-  conscientiousness: 0,
-  optimism: 0,
-  independence: 0,
-};
-
-/**
  * プロフィールフックの戻り値の型
  * @param {ProfileData | null} profileData - プロフィールデータ
  * @param {boolean} isLoading - ローディング状態
@@ -59,9 +48,7 @@ export const useProfile = (user: User | null): UseProfileReturn => {
       // プロフィール情報を取得
       const { data: profileData, error: profileError } = await supabase
         .from('profiles')
-        .select(
-          'username, avatar_url, bio, extroversion, openness, conscientiousness, optimism, independence'
-        )
+        .select('username, avatar_url, bio')
         .eq('user_id', user.id)
         .single();
 
@@ -75,7 +62,6 @@ export const useProfile = (user: User | null): UseProfileReturn => {
                 user_id: user.id,
                 username: '匿名ユーザー',
                 bio: 'あなたの個性は、他者との関わりの中で見つかる',
-                ...DEFAULT_PROFILE,
               },
             ])
             .select()
