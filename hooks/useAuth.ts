@@ -7,7 +7,7 @@ import {
 } from '../utils/auth';
 import { supabase } from '../lib/supabase';
 import { router } from 'expo-router';
-import { Session } from '@supabase/supabase-js';
+import { Session, User } from '@supabase/supabase-js';
 
 /**
  * 認証機能を提供するカスタムフック
@@ -17,17 +17,38 @@ export const useAuth = (): AuthHookReturn => {
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<AuthError>(null);
   const [session, setSession] = useState<Session | null>(null);
+  const [user, setUser] = useState<User | null>(null);
 
   useEffect(() => {
-    // 初期セッションの取得
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session);
-      setLoading(false);
-    });
+    // 初期セッションとユーザー情報の取得
+    const initAuth = async () => {
+      try {
+        // セッション情報を取得
+        const { data: sessionData } = await supabase.auth.getSession();
+        setSession(sessionData.session);
+
+        // ユーザー情報を取得
+        if (sessionData.session?.user) {
+          setUser(sessionData.session.user);
+        } else {
+          const { data: userData } = await supabase.auth.getUser();
+          setUser(userData.user);
+        }
+      } catch (error) {
+        console.error('認証情報の取得に失敗しました:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    initAuth();
 
     // 認証状態の変更を監視
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((_event, session) => {
       setSession(session);
+      setUser(session?.user || null);
       setLoading(false);
     });
 
@@ -159,10 +180,10 @@ export const useAuth = (): AuthHookReturn => {
   };
 
   return {
+    user,
     loading,
     error,
     session,
-    user: session?.user ?? null,
     signUp,
     signIn,
     signOut,

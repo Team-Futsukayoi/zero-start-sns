@@ -50,7 +50,11 @@ export const PostItem: React.FC<PostItemProps> = ({
   /** ローカルのいいね数 */
   const [localLikesCount, setLocalLikesCount] = useState<number>(likesCount);
   const [showEvaluation, setShowEvaluation] = useState<boolean>(false);
-  const { ratings, updateRating, submitRating, isSubmitting } = usePersonality(post.id);
+  const { ratings, updateRating, submitRating, isSubmitting, isLoading } =
+    usePersonality(post.id);
+
+  // 評価済みかどうかをチェック（いずれかの特性が評価されているか）
+  const hasEvaluations = Object.keys(ratings).length > 0;
 
   /**
    * 投稿が作成されてからの経過時間を表示用にフォーマットする
@@ -147,14 +151,28 @@ export const PostItem: React.FC<PostItemProps> = ({
         </Pressable>
 
         <Pressable
-          style={styles.actionButton}
-          onPress={() => setShowEvaluation(!showEvaluation)}
+          style={[
+            styles.actionButton,
+            hasEvaluations && styles.disabledActionButton,
+          ]}
+          onPress={() => {
+            if (!hasEvaluations) {
+              setShowEvaluation(!showEvaluation);
+            }
+          }}
         >
-          <Text style={styles.actionText}>評価</Text>
+          <Text
+            style={[
+              styles.actionText,
+              hasEvaluations && styles.disabledActionText,
+            ]}
+          >
+            {hasEvaluations ? '評価済み' : '評価'}
+          </Text>
         </Pressable>
       </View>
 
-      {showEvaluation && (
+      {showEvaluation && !hasEvaluations && !isLoading && (
         <View style={styles.evaluationContainer}>
           {PERSONALITY_TRAITS.map((trait) => (
             <PersonalityRating
@@ -162,6 +180,7 @@ export const PostItem: React.FC<PostItemProps> = ({
               trait={trait}
               value={ratings[trait.name] || 0}
               onValueChange={(value) => handleTraitChange(trait.name, value)}
+              disabled={!!ratings[trait.name]}
             />
           ))}
         </View>
@@ -228,6 +247,12 @@ const styles = StyleSheet.create({
     borderTopWidth: 1,
     borderTopColor: '#f0f0f0',
     paddingTop: 12,
+  },
+  disabledActionButton: {
+    opacity: 0.5,
+  },
+  disabledActionText: {
+    color: '#999',
   },
 });
 
