@@ -7,37 +7,63 @@ import {
   Pressable,
   TouchableOpacity,
   ActivityIndicator,
+  RefreshControl,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Settings } from 'lucide-react-native';
 import React from 'react';
 import { useAuth } from '../../../hooks/useAuth';
 import { MaterialIcons } from '@expo/vector-icons';
+import { useProfile } from '../../../hooks/useProfile';
+import { usePersonalityTraits } from '../../../hooks/usePersonalityTraits';
+import { PersonalityTrait } from '../../../components/PersonalityTrait';
 
-interface PersonalityTraitProps {
-  title: string;
-  description: string;
-  value: number;
-}
-
+/**
+ * プロフィール画面コンポーネント
+ * ユーザーのプロフィール情報と性格特性を表示する
+ *
+ * @returns プロフィール画面
+ */
 export default function ProfileScreen() {
-  const { signOut, loading } = useAuth();
+  const { user, signOut, loading } = useAuth();
 
-  // TODO: Implement profile data fetching from Supabase
-  const profile = {
-    evaluations: {
-      extroversion: 0.3,
-      openness: 0.7,
-      conscientiousness: 0.5,
-      optimism: 0.8,
-      independence: 0.4,
-    },
-    stats: {
-      posts: 24,
-      evaluations: 156,
-      received: 432,
-    },
-  };
+  // プロフィールデータを取得
+  const {
+    profileData,
+    isLoading,
+    refreshing,
+    onRefresh: handleProfileRefresh,
+  } = useProfile(user);
+
+  // パーソナリティ特性データを取得
+  const {
+    traits: personalityTraits,
+    isLoading: traitsLoading,
+    refetchStats,
+  } = usePersonalityTraits(user);
+
+  // プルトゥリフレッシュのハンドラー
+  const onRefresh = React.useCallback(async () => {
+    if (!user) return;
+
+    try {
+      // プロフィールデータを再取得
+      await handleProfileRefresh();
+      // パーソナリティ統計を再取得
+      await refetchStats();
+      console.log('プロフィールデータを更新しました');
+    } catch (error) {
+      console.error('データ更新エラー:', error);
+    }
+  }, [user, handleProfileRefresh, refetchStats]);
+
+  if (isLoading || !user) {
+    return (
+      <SafeAreaView style={[styles.container, styles.loadingContainer]}>
+        <ActivityIndicator size="large" color="#0000ff" />
+      </SafeAreaView>
+    );
+  }
 
   return (
     <SafeAreaView style={styles.container}>
@@ -48,66 +74,75 @@ export default function ProfileScreen() {
         </Pressable>
       </View>
 
-      <ScrollView style={styles.content}>
+      <ScrollView
+        style={styles.content}
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={onRefresh}
+            colors={['#4ecdc4']}
+            tintColor="#4ecdc4"
+          />
+        }
+      >
         <View style={styles.profileHeader}>
           <Image
-            source={{
-              uri: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=128&h=128&fit=crop',
-            }}
+            source={
+              profileData?.avatar_url
+                ? { uri: profileData.avatar_url }
+                : require('../../../assets/images/icon.png')
+            }
             style={styles.avatar}
           />
-          <Text style={styles.username}>匿名ユーザー</Text>
+          <Text style={styles.username}>
+            {profileData?.username || '匿名ユーザー'}
+          </Text>
           <Text style={styles.bio}>
-            あなたの個性は、他者との関わりの中で見つかる
+            {profileData?.bio || 'あなたの個性は、他者との関わりの中で見つかる'}
           </Text>
         </View>
 
         <View style={styles.statsContainer}>
           <View style={styles.statItem}>
-            <Text style={styles.statValue}>{profile.stats.posts}</Text>
+            <Text style={styles.statValue}>
+              {profileData?.stats.posts || 0}
+            </Text>
             <Text style={styles.statLabel}>投稿</Text>
           </View>
           <View style={styles.statDivider} />
           <View style={styles.statItem}>
-            <Text style={styles.statValue}>{profile.stats.evaluations}</Text>
+            <Text style={styles.statValue}>
+              {profileData?.stats.evaluations || 0}
+            </Text>
             <Text style={styles.statLabel}>評価</Text>
           </View>
           <View style={styles.statDivider} />
           <View style={styles.statItem}>
-            <Text style={styles.statValue}>{profile.stats.received}</Text>
+            <Text style={styles.statValue}>
+              {profileData?.stats.received || 0}
+            </Text>
             <Text style={styles.statLabel}>受けた評価</Text>
           </View>
         </View>
 
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>性格分析</Text>
-          <View style={styles.personalityContainer}>
-            <PersonalityTrait
-              title="外向性"
-              description="社交的 / 内向的"
-              value={profile.evaluations.extroversion}
-            />
-            <PersonalityTrait
-              title="開放性"
-              description="創造的 / 保守的"
-              value={profile.evaluations.openness}
-            />
-            <PersonalityTrait
-              title="誠実性"
-              description="計画的 / 気分屋"
-              value={profile.evaluations.conscientiousness}
-            />
-            <PersonalityTrait
-              title="楽観性"
-              description="前向き / 慎重"
-              value={profile.evaluations.optimism}
-            />
-            <PersonalityTrait
-              title="独立性"
-              description="主体的 / 協調的"
-              value={profile.evaluations.independence}
-            />
-          </View>
+          {traitsLoading ? (
+            <ActivityIndicator size="small" color="#0000ff" />
+          ) : (
+            <View style={styles.personalityContainer}>
+              {personalityTraits.map((trait) => (
+                <PersonalityTrait
+                  key={trait.trait}
+                  trait={trait.trait}
+                  label={trait.label}
+                  description={trait.description}
+                  value={trait.value}
+                  count={trait.count}
+                />
+              ))}
+            </View>
+          )}
         </View>
       </ScrollView>
 
@@ -131,28 +166,14 @@ export default function ProfileScreen() {
   );
 }
 
-function PersonalityTrait({
-  title,
-  description,
-  value,
-}: PersonalityTraitProps) {
-  return (
-    <View style={styles.traitContainer}>
-      <View style={styles.traitHeader}>
-        <Text style={styles.traitTitle}>{title}</Text>
-        <Text style={styles.traitDescription}>{description}</Text>
-      </View>
-      <View style={styles.progressBar}>
-        <View style={[styles.progressFill, { width: `${value * 100}%` }]} />
-      </View>
-    </View>
-  );
-}
-
 const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#fff',
+  },
+  loadingContainer: {
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   header: {
     flexDirection: 'row',
@@ -228,31 +249,6 @@ const styles = StyleSheet.create({
   },
   personalityContainer: {
     gap: 20,
-  },
-  traitContainer: {
-    gap: 10,
-  },
-  traitHeader: {
-    gap: 4,
-  },
-  traitTitle: {
-    fontSize: 15,
-    fontWeight: '500',
-  },
-  traitDescription: {
-    fontSize: 12,
-    color: '#666',
-  },
-  progressBar: {
-    height: 6,
-    backgroundColor: '#eee',
-    borderRadius: 3,
-    overflow: 'hidden',
-  },
-  progressFill: {
-    height: '100%',
-    backgroundColor: '#000',
-    borderRadius: 3,
   },
   footer: {
     padding: 20,
